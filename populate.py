@@ -14,7 +14,7 @@ url = "https://tiniest-little-meme.base-mainnet.discover.quiknode.pro/" + env_va
 
 
 def fetch_transactions(transactions):
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(get_transaction_data, tx) for tx in transactions]
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -23,6 +23,7 @@ def fetch_transactions(transactions):
                 store_transaction(tx_raw["result"])
             except Exception as e:
                 print(f"An error occurred: {e}")
+                print(tx_raw)
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
 def populate_database():
     init_db()
 
-    latest_block_int = int(get_latest_block_number_json()["result"], 16) # from json hex string to int
+    latest_block_int = int(get_latest_block_number_json()["result"], 16)  # from json hex string to int
     db_latest_block = get_latest_stored_block_number()[0][0]  # db returns list of tuple
 
     for i in range(db_latest_block+1, latest_block_int):
