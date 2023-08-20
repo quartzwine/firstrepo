@@ -1,13 +1,28 @@
+import concurrent
+
 from dotenv import load_dotenv
 import os
 
 from database import init_db, get_latest_stored_block_number
 from main import get_latest_block_number_json, get_block_data_from_number, get_transaction_data, store_transaction
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 
 env_var = os.getenv('API_KEY')
 url = "https://tiniest-little-meme.base-mainnet.discover.quiknode.pro/" + env_var
+
+
+def fetch_transactions(transactions):
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(get_transaction_data, tx) for tx in transactions]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                tx_raw = future.result()
+                print("storing tx hash: {}".format(tx_raw["result"]["hash"]))
+                store_transaction(tx_raw["result"])
+            except Exception as e:
+                print(f"An error occurred: {e}")
 
 
 def main():
@@ -24,12 +39,8 @@ def populate_database():
     for i in range(db_latest_block+1, latest_block_int):
         block_data = get_block_data_from_number(hex(i))
         print("populating block: {}".format(i))
-        for tx in block_data["result"]["transactions"]:
-            #print("storing hash: {}".format(tx))
-            tx_raw = get_transaction_data(tx)
-            print("storing tx hash: {}".format(tx_raw["result"]["hash"]))
-            store_transaction(tx_raw["result"])
-
+        print(block_data)
+        fetch_transactions(block_data["result"]["transactions"])
 
         print("completed :)")
 
