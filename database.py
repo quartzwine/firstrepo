@@ -47,7 +47,7 @@ def insert_transaction(transaction):
 
 
 # this needs to line up with table schema. if second parameter is not empty string it is required.
-def create_entry_from_transaction(transaction) :
+def create_entry_from_transaction(transaction):
     return (
         transaction.get('blockHash', ''),
         int(transaction.get('blockNumber', '0'), 16),
@@ -73,6 +73,15 @@ def get_all_transactions():
     conn = connect()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM transactions')
+    transactions = cursor.fetchall()
+    conn.close()
+    return transactions
+
+
+def get_latest_stored_block_number():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute('SELECT MAX(blockNumber) from transactions')
     transactions = cursor.fetchall()
     conn.close()
     return transactions
