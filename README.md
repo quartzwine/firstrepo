@@ -1,5 +1,5 @@
 # firstrepo
-Hacking away at the base blockchain and eventually friends.tech
+hacking away at the base blockchain and eventually friends.tech
 
 
 ## getting started
