@@ -1,8 +1,20 @@
-import sqlite3
+import psycopg2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+DB_PASS = os.getenv('DB_PASS')
 
 
 def connect():
-    conn = sqlite3.connect('transactions.db')
+    # modify this to your own taste
+    conn = psycopg2.connect(
+        dbname="blockchain",
+        user="postgres",
+        password=DB_PASS,
+        host="localhost",
+        port="5432"
+    )
     return conn
 
 
@@ -40,14 +52,16 @@ def insert_transaction(transaction):
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO transactions (blockHash, blockNumber, from_address, gas, gasPrice, hash, input, nonce, to_address, transactionIndex, value, type, v, r, s, sourceHash, mint)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', create_entry_from_transaction(transaction))
     conn.commit()
     conn.close()
 
 
+
 # this needs to line up with table schema. if second parameter is not empty string it is required.
 def create_entry_from_transaction(transaction):
+    print("blockhash: {}".format(transaction.get("blockHash")))
     return (
         transaction.get('blockHash', ''),
         int(transaction.get('blockNumber', '0'), 16),

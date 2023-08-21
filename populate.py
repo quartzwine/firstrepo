@@ -2,6 +2,7 @@ import concurrent
 
 from dotenv import load_dotenv
 import os
+import time
 
 from database import init_db, get_latest_stored_block_number
 from main import get_latest_block_number_json, get_block_data_from_number, get_transaction_data, store_transaction
@@ -28,7 +29,9 @@ def fetch_transactions(transactions):
 
 
 def main():
-    populate_database()
+    while True:  # Run the code inside this loop forever
+        populate_database()
+        time.sleep(2) # base has 2 second block times. should be good for now
 
 
 # populates sqlite db from the latest block seen in db to latest block that exists
@@ -38,7 +41,7 @@ def populate_database():
     latest_block_int = int(get_latest_block_number_json()["result"], 16)  # from json hex string to int
     db_latest_block = get_latest_stored_block_number()[0][0]  # db returns list of tuple
 
-    for i in range(latest_block_int, db_latest_block, -1):
+    for i in range(latest_block_int, 0, -1):
         block_data = get_block_data_from_number(hex(i))
         print("populating block: {}".format(i))
         print(block_data)
