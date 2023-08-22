@@ -11,9 +11,13 @@ this package uses sqllite as a db. upgrade to something more hardcore if you wis
 
 base is about 32kb per block. one day of blocks is about 1gb. sqllite should be sufficient
 
+so the issue with sqlite is its pretty garbo at concurrent reads/writes. it can handle the writes, but 
+i have a separate service trying to read at the same time and that does not work. so migrated to postgres
+
 
 ## getting started
 1) add ur API key from quicknode into a .env file. `API_KEY`
+2) add `DB_PASS` to ur env. set this up with postgres so yeah u know what to do
 
 
 ## queries
