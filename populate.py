@@ -5,7 +5,7 @@ import os
 import time
 import queue
 
-from database import init_db, get_latest_stored_block_number
+from database import init_db, get_latest_stored_block_number, insert_transactions
 from main import get_latest_block_number_json, get_block_data_from_number, get_transaction_data, store_transaction
 from concurrent.futures import ThreadPoolExecutor
 
@@ -17,22 +17,25 @@ url = "https://tiniest-little-meme.base-mainnet.discover.quiknode.pro/" + env_va
 block_queue = queue.PriorityQueue()
 blocks_added = set()
 
+# will store multiple txs at one go. storing one tx at a time is heavy on db
+BATCH_SIZE = 20
+
 
 def fetch_transactions():
     while not block_queue.empty():
         priority, block_data = block_queue.get()
         transactions = block_data["result"]["transactions"]
-    # 8 works ish
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(get_transaction_data, tx) for tx in transactions]
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    tx_raw = future.result()
-                    print("storing tx hash: {}".format(tx_raw["result"]["hash"]))
-                    store_transaction(tx_raw["result"])
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    print(tx_raw)
+
+        block_number = int(block_data["result"]["number"],16)
+
+         # lets try this
+        for i in range(0, len(transactions), BATCH_SIZE):
+            print("adding {} txs from block: {}".format(min(BATCH_SIZE,len(transactions)), block_number))
+            transaction_batch = transactions[i:i+BATCH_SIZE]
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(get_transaction_data, tx) for tx in transaction_batch]
+                tx_raws = [future.result() for future in concurrent.futures.as_completed(futures)]
+                insert_transactions(tx_raws)
 
 
 def main():

@@ -58,10 +58,23 @@ def insert_transaction(transaction):
     conn.close()
 
 
+def insert_transactions(tx_raws):
+    transactions = [tx_raw["result"] for tx_raw in tx_raws]
+    conn = connect()
+    cursor = conn.cursor()
+    query = '''
+        INSERT INTO transactions (blockHash, blockNumber, from_address, gas, gasPrice, hash, input, nonce, to_address, transactionIndex, value, type, v, r, s, sourceHash, mint)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    '''
+    data = [create_entry_from_transaction(transaction) for transaction in transactions]
+    cursor.executemany(query, data)
+    conn.commit()
+    conn.close()
+
+
 
 # this needs to line up with table schema. if second parameter is not empty string it is required.
 def create_entry_from_transaction(transaction):
-    print("blockhash: {}".format(transaction.get("blockHash")))
     return (
         transaction.get('blockHash', ''),
         int(transaction.get('blockNumber', '0'), 16),
