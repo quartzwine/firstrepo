@@ -72,7 +72,6 @@ def insert_transactions(tx_raws):
     conn.close()
 
 
-
 # this needs to line up with table schema. if second parameter is not empty string it is required.
 def create_entry_from_transaction(transaction):
     return (
