@@ -72,3 +72,8 @@ def get_transaction_data(tx):
         print(f"Timeout error when fetching transaction data for: {tx}")
         return None
 
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
