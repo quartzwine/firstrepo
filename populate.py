@@ -18,8 +18,8 @@ blocks_added = set()
 
 # will store multiple txs at one go. storing one tx at a time is heavy on db
 DB_BATCH_SIZE = 20
-
 BLOCK_BATCH_SIZE = 5
+THREADS = 3
 
 
 def fetch_transactions():
@@ -32,20 +32,21 @@ def fetch_transactions():
         for i in range(0, len(transactions), DB_BATCH_SIZE):
             print("adding {} txs from block: {}".format(min(DB_BATCH_SIZE,len(transactions)), block_number))
             transaction_batch = transactions[i:i+DB_BATCH_SIZE]
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            with ThreadPoolExecutor(max_workers=THREADS) as executor:
                 futures = [executor.submit(get_transaction_data, tx) for tx in transaction_batch]
-                tx_raws = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+                # collect futures, filter out any None which are returned in case of timeout
+                tx_raws = [future.result() for future in concurrent.futures.as_completed(futures) if future.result() is not None]
                 insert_transactions(tx_raws)
 
 
 def main():
-    while True:  # Run the code inside this loop forever
+    while True:
         populate_database()
         fetch_transactions()
-        # time.sleep(2) # base has 2 second block times. should be good for now
 
 
-# populates sqlite db from the latest block that exists to the latest block seen in db
+# populates db from the latest block that exists to the latest block seen in db
 def populate_database():
     init_db()
 
@@ -59,7 +60,6 @@ def populate_database():
 
         block_data = get_block_data_from_number(hex(i))
         print("adding block to queue: {}".format(i))
-        #print(block_data)
 
         # Add the block to the Priority Queue. Use negative block number to process latest blocks first.
         block_queue.put((-i, block_data))

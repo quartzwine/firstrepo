@@ -2,6 +2,7 @@ import json
 import requests
 import os
 from dotenv import load_dotenv
+from requests import ConnectTimeout
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 load_dotenv()
@@ -62,8 +63,12 @@ def get_transaction_data(tx):
         'Content-Type': 'application/json'
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)
-    response_json = json.loads(response.text)
+    try:
+        response = requests.request("POST", url, headers=headers, data=payload)
+        response_json = json.loads(response.text)
+        return response_json
 
-    return response_json
+    except ConnectTimeout:
+        print(f"Timeout error when fetching transaction data for: {tx}")
+        return None
 
